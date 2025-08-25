@@ -3,21 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de IMEI</title>
-    <link rel="icon" type="image/x-icon" href="https://github.com/vmacagnani/api-pre-os/raw/main/favicon.ico">
+    <title>Avatek | Consulta de IMEI</title>
+    <link rel="icon" type="image/png" href="https://avatek-m2m.github.io/pos-android/favicon.png" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main>
-        <h1>Verificador de Dispositivo por IMEI</h1>
-        <div class="search-container">
-            <input type="text" id="imeiInput" placeholder="Digite o IMEI aqui..." maxlength="15">
-            <button id="checkButton">Consultar</button>
+    
+    <div class="card">
+        <img src="https://avatek-m2m.github.io/pos-android/avatek-logo-azul.png" alt="Logo Avatek" class="logo">
+        
+        <h1>Consulta de Equipamento</h1>
+
+        <div class="form-group">
+            <label for="imeiInput">Número do IMEI</label>
+            <input type="text" id="imeiInput" placeholder="Digite os 15 dígitos do IMEI" maxlength="15">
         </div>
+
+        <button id="checkButton">CONSULTAR IMEI</button>
+
         <div id="loader" class="loader hidden"></div>
         <div id="results" class="results-container">
             </div>
-    </main>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
