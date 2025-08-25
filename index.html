@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de IMEI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <h1>Verificador de Dispositivo por IMEI</h1>
+        <div class="search-container">
+            <input type="text" id="imeiInput" placeholder="Digite o IMEI aqui..." maxlength="15">
+            <button id="checkButton">Consultar</button>
+        </div>
+        <div id="loader" class="loader hidden"></div>
+        <div id="results" class="results-container">
+            </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
