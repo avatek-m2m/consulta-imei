@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONFIGURAÇÕES ---
     // 1. Cole a URL do seu App da Web do Google Apps Script aqui
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxI0Re9NmKrgVDgJJw7M80jKQp5dHYCqAFk412k-2cBzNdxG_ldT1w_xTIVriFI3Wdw/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7M_mXDAAou5tt2gDQyoV_EYiv98eZJ0NYjEbhMeqZnISs607ICs2pTwAqz76HxCTz/execc';
 
     // 2. Cole sua chave da API do imei.info aqui
     const IMEI_INFO_API_KEY = 'ef20d6c9-1f4f-4fa2-9285-7f4035cd5fe3'; 
