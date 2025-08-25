@@ -4,91 +4,100 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsDiv = document.getElementById('results');
     const loader = document.getElementById('loader');
 
-    // IMPORTANTE: Substitua 'SUA_CHAVE_API_AQUI' pela sua chave real do imei.info
-    const API_KEY = 'ef20d6c9-1f4f-4fa2-9285-7f4035cd5fe3'; 
+    // --- CONFIGURAÇÕES ---
+    // 1. Cole a URL do seu App da Web do Google Apps Script aqui
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlMaDvZRn1b2H3qPLv08-HpOdNRRRJuvV4wgzMaXS2KE53Q5vJa1xz_V1DrV6109_d/exec';
 
-    const API_URL = 'https://dash.imei.info/api/v1/device/info';
+    // 2. Cole sua chave da API do imei.info aqui
+    const IMEI_INFO_API_KEY = 'ef20d6c9-1f4f-4fa2-9285-7f4035cd5fe3'; 
+    const IMEI_INFO_API_URL = 'https://dash.imei.info/api/v1/device/info';
+    // --- FIM DAS CONFIGURAÇÕES ---
 
     checkButton.addEventListener('click', checkImei);
-
-    // Permite que o usuário aperte "Enter" para pesquisar
-    imeiInput.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') {
-            checkImei();
-        }
-    });
+    imeiInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') checkImei(); });
 
     async function checkImei() {
         const imei = imeiInput.value.trim();
-
-        if (API_KEY === 'SUA_CHAVE_API_AQUI') {
-            displayError('Erro: A Chave de API (API_KEY) não foi configurada no arquivo script.js.');
-            return;
-        }
-
         if (!/^\d{14,15}$/.test(imei)) {
             displayError('Por favor, insira um IMEI válido (14 ou 15 dígitos).');
             return;
         }
 
-        // Prepara a interface para a consulta
+        const tac = imei.substring(0, 8);
         resultsDiv.innerHTML = '';
         loader.classList.remove('hidden');
 
-        const requestUrl = `${API_URL}?imei=${imei}&format=json`;
-
         try {
-            const response = await fetch(requestUrl, {
-                method: 'GET',
-                headers: {
-                    'X-Api-Key': API_KEY,
-                },
-            });
+            // ETAPA 1: Tenta buscar na base local (Google Sheets)
+            const localResponse = await fetch(`${GOOGLE_SCRIPT_URL}?tac=${tac}`);
+            const localData = await localResponse.json();
 
-            if (!response.ok) {
-                // Trata erros da API, como chave inválida ou IMEI não encontrado
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Erro ${response.status}: Não foi possível consultar o IMEI.`);
+            if (localData.status === 'found') {
+                console.log('Dados encontrados na base local!');
+                displayResults(localData.data, 'Base de Dados Local');
+                return; // Encerra a função aqui, pois já encontrou
             }
-
-            const data = await response.json();
-            displayResults(data);
+            
+            // ETAPA 2: Se não encontrou, busca na API externa
+            console.log('Não encontrado na base local. Consultando API externa...');
+            const externalData = await fetchFromExternalAPI(imei);
+            
+            displayResults(externalData, 'API Externa (imei.info)');
+            
+            // ETAPA 3: Salva o novo resultado na base local para futuras consultas
+            await saveToSheet(tac, externalData.brand, externalData.model);
 
         } catch (error) {
             displayError(error.message);
         } finally {
-            // Esconde o loader ao finalizar
             loader.classList.add('hidden');
         }
     }
+    
+    async function fetchFromExternalAPI(imei) {
+        if (IMEI_INFO_API_KEY === 'SUA_CHAVE_API_AQUI') {
+            throw new Error('Erro: A Chave de API (IMEI_INFO_API_KEY) não foi configurada.');
+        }
 
-    function displayResults(data) {
-        // Limpa resultados antigos
-        resultsDiv.innerHTML = '';
+        const requestUrl = `${IMEI_INFO_API_URL}?imei=${imei}&format=json`;
+        const response = await fetch(requestUrl, {
+            method: 'GET',
+            headers: { 'X-Api-Key': IMEI_INFO_API_KEY },
+        });
 
-        // Cria a exibição dos dados
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Erro na API externa: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    async function saveToSheet(tac, brand, model) {
+        console.log(`Salvando TAC ${tac} na base de dados...`);
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Necessário para POST em Apps Script simples
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tac, brand, model }),
+            });
+            console.log('Salvo com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar na planilha:', error);
+        }
+    }
+
+    function displayResults(data, source) {
         const deviceName = `${data.brand} ${data.model}`;
-        const imageUrl = data.device; // A API retorna a URL da imagem no campo 'device'
-
         let content = `
             <h2>${deviceName}</h2>
-            ${imageUrl ? `<img src="${imageUrl}" alt="${deviceName}" style="max-width: 150px; border-radius: 8px; margin-bottom: 1rem;">` : ''}
+            <p style="font-size: 0.9em; color: #666;"><em>Fonte: ${source}</em></p>
             <ul>
                 <li><strong>Marca:</strong> ${data.brand}</li>
                 <li><strong>Modelo:</strong> ${data.model}</li>
-                <li><strong>IMEI:</strong> ${data.imei}</li>
+                <li><strong>TAC (8 dígitos):</strong> ${data.tac || 'N/A'}</li>
             </ul>
         `;
-        
-        // Adiciona especificações, se existirem
-        if (data.specifications && data.specifications.length > 0) {
-            content += '<h3>Especificações:</h3><ul>';
-            data.specifications.forEach(spec => {
-                content += `<li><strong>${spec.name}:</strong> ${spec.value}</li>`;
-            });
-            content += '</ul>';
-        }
-
         resultsDiv.innerHTML = content;
     }
 
